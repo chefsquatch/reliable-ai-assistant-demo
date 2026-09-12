@@ -1,0 +1,48 @@
+"""Configuration, loaded from the environment.
+
+The API key lives ONLY in the environment (a gitignored .env locally, the deploy
+platform's dashboard in production). It is never hard-coded and never committed.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:  # dotenv is a convenience in dev; prod sets real env vars
+    pass
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+CORPUS_DIR = ROOT_DIR / "corpus"
+STATIC_DIR = ROOT_DIR / "static"
+
+# .strip() is load-bearing: a key pasted into a deploy dashboard often carries a
+# trailing newline or space. httpx refuses to send an x-api-key header containing
+# whitespace and the SDK surfaces that as a bare "Connection error" (the request
+# never leaves) — indistinguishable from a network failure unless you strip here.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5").strip()
+
+# The developer's first name, used in the assistant's voice and handoff. One line
+# to change. Kept generic on purpose — no company or full identity in the demo.
+DEVELOPER_NAME = os.getenv("DEVELOPER_NAME", "Les").strip()
+
+# The single handoff target: the developer's Upwork profile. When a visitor is a
+# real fit and ready to talk, the assistant points them here. Nothing off-platform.
+UPWORK_URL = os.getenv("UPWORK_URL", "").strip()
+
+# Cap on conversation length sent to the model (turns kept from the tail).
+MAX_HISTORY_TURNS = int(os.getenv("MAX_HISTORY_TURNS", "24"))
+
+# Origins allowed to call the API. For a standalone demo the page and the API are
+# the same origin, so "*" is the simplest correct default (no credentials are ever
+# sent — see main.py). Override with a comma-separated list to lock it down.
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    if o.strip()
+]

@@ -1,0 +1,24 @@
+# Keeps the free Render instance awake by pinging it every ~10 minutes, so the
+# assistant answers instantly instead of cold-starting (~50s) for a visitor after
+# a period of inactivity. A single always-on free web service stays within
+# Render's free monthly hours.
+#
+# UPDATE THE URL below to your real Render URL after the first deploy.
+#
+# Note: GitHub disables scheduled workflows after 60 days with no repo activity,
+# and cron timing is best-effort (can lag). For rock-solid uptime, also point an
+# external monitor (e.g. UptimeRobot, 5-min interval) at /health.
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every 10 minutes
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the assistant health endpoint
+        # `|| true` so a cold-start timeout never marks the run failed (no noise).
+        run: curl -fsS --max-time 90 https://reliable-ai-assistant-demo.onrender.com/health || true

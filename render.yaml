@@ -1,0 +1,23 @@
+# Render.com blueprint. Push this repo, "New + > Blueprint", point at it, then set
+# ANTHROPIC_API_KEY in the dashboard (sync:false keeps it out of the repo).
+#
+# No build-time model download or vector store here — grounding is corpus-in-context,
+# so the service boots fast and binds its port immediately.
+services:
+  - type: web
+    name: reliable-ai-assistant-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-5
+      - key: DEVELOPER_NAME
+        value: Les
+      - key: UPWORK_URL
+        value: https://www.upwork.com/freelancers/~0178a832a97394710e
+      - key: PYTHON_VERSION
+        value: "3.12.6"
