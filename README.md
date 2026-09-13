@@ -81,3 +81,9 @@ real model calls (small spend).
    rails at the bottom).
 2. Put their handoff link in `corpus/01-links.md` and set `UPWORK_URL`.
 3. Set `DEVELOPER_NAME`. Optionally restyle via `DOM_MAP.md`. Redeploy.
+
+## License
+
+All rights reserved. This repository is public for **evaluation and demonstration
+only** — it is not open source. See [LICENSE](LICENSE). Please don't reuse the code
+or template without permission.
