@@ -38,33 +38,37 @@
     cfg.greeting ||
     attr(
       "data-greeting",
-      "Hi — I'm " + NAME + "'s assistant. I answer from what " + NAME + " actually " +
-        "does, and I'll tell you straight when something's outside that. What are you " +
-        "trying to build or fix?"
+      "Hi — what are you trying to build or fix? I'll tell you straight if it's " +
+        "something " + NAME + " does."
     );
   var TEASER =
     cfg.teaser ||
-    attr("data-teaser", "Ask me about " + NAME + "'s work — I won't make things up.");
+    attr("data-teaser", "Ask me about the work — I won't make things up.");
   // Auto-open the panel once for a brand-new visitor (desktop only, so it never
   // takes over a phone screen). Set window.RELIABLE_ASSISTANT.autoOpen=false to disable.
   var AUTO_OPEN = cfg.autoOpen !== false && attr("data-auto-open", "true") !== "false";
 
   // --- Theme (override via window.RELIABLE_ASSISTANT.theme) ------------------
+  // gold*  = primary brand (launcher, user bubbles, send, logo mark)
+  // green* = the Upwork handoff CTA + the "grounded" trust marker
   var t = Object.assign(
     {
       bg: "#141417",
+      bgDeep: "#0e0e10",
       panel: "#1f1f24",
       panel2: "#2a2a31",
       line: "#34343c",
-      red: "#d4302f",
-      redHot: "#ff4b3e",
-      amber: "#e0a020",
+      gold: "#e0a020",
+      goldHi: "#f59e1f",
       green: "#4ec07a",
+      greenHi: "#5fd08a",
       text: "#e6e6e6",
       muted: "#9a9aa2",
     },
     cfg.theme || {}
   );
+  // rgba shadow tints derived from the brand golds (kept as literals for perf).
+  var GLOW = "rgba(224,160,32,";
 
   var history = []; // [{role, content}]
   var busy = false;
@@ -82,86 +86,91 @@
     ".raw *{box-sizing:border-box}" +
     ".raw [hidden]{display:none!important}" +
     ".raw-launch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;" +
-    "color:#fff;font-weight:700;font-size:15px;padding:0 18px;height:52px;border-radius:26px;" +
-    "background:linear-gradient(180deg," + t.redHot + "," + t.red + ");" +
-    "box-shadow:0 6px 20px rgba(212,48,47,.38),0 1px 0 rgba(255,255,255,.18) inset;" +
-    "transition:transform .15s ease,box-shadow .15s ease;position:relative}" +
-    ".raw-launch:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(212,48,47,.5)}" +
-    ".raw-launch svg{width:22px;height:22px;flex:none}" +
-    ".raw-launch-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:10px}" +
-    ".raw-launch.raw-pulse::after{content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;" +
-    "box-shadow:0 0 0 0 rgba(255,75,62,.5);animation:raw-pulse 2.2s ease-out infinite}" +
-    "@keyframes raw-pulse{0%{box-shadow:0 0 0 0 rgba(255,75,62,.5)}70%{box-shadow:0 0 0 18px rgba(255,75,62,0)}" +
-    "100%{box-shadow:0 0 0 0 rgba(255,75,62,0)}}" +
-    ".raw-teaser{position:relative;max-width:236px;background:" + t.panel + ";color:" + t.text + ";" +
-    "border:1px solid " + t.line + ";border-radius:14px;border-bottom-right-radius:4px;padding:12px 30px 12px 14px;" +
-    "font-size:13.5px;line-height:1.45;box-shadow:0 12px 32px rgba(0,0,0,.45);cursor:pointer;" +
-    "animation:raw-teaser-in .25s ease-out}" +
-    ".raw-teaser b{color:" + t.redHot + "}" +
-    ".raw-teaser-x{position:absolute;top:5px;right:7px;background:transparent;border:none;color:" + t.muted + ";" +
+    "color:#141417;font-family:Oswald,'Arial Narrow',sans-serif;text-transform:uppercase;" +
+    "letter-spacing:.06em;font-weight:600;font-size:16px;padding:0 22px;height:52px;border-radius:26px;" +
+    "background:linear-gradient(180deg," + t.goldHi + "," + t.gold + ");" +
+    "box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 8px 24px " + GLOW + ".4);" +
+    "transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;position:relative}" +
+    ".raw-launch:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 10px 28px " + GLOW + ".5)}" +
+    ".raw-launch svg{width:20px;height:20px;flex:none}" +
+    ".raw-launch-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:12px}" +
+    ".raw-launch.raw-pulse{animation:raw-pulse 2.2s ease-out infinite}" +
+    "@keyframes raw-pulse{0%{box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 0 " + GLOW + ".55)}" +
+    "70%{box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 16px " + GLOW + "0)}" +
+    "100%{box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 0 " + GLOW + "0)}}" +
+    ".raw-teaser{position:relative;max-width:250px;background:" + t.panel + ";color:" + t.text + ";" +
+    "border:1px solid " + t.line + ";border-radius:12px;border-bottom-right-radius:3px;padding:12px 34px 12px 14px;" +
+    "font-size:13px;line-height:1.5;box-shadow:0 12px 30px rgba(0,0,0,.5);cursor:pointer;" +
+    "animation:raw-in .3s ease}" +
+    ".raw-teaser b{color:" + t.goldHi + "}" +
+    ".raw-teaser-x{position:absolute;top:6px;right:8px;background:transparent;border:none;color:" + t.muted + ";" +
     "font-size:15px;line-height:1;cursor:pointer;padding:2px 5px;border-radius:6px}" +
     ".raw-teaser-x:hover{color:" + t.text + "}" +
-    "@keyframes raw-teaser-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
-    ".raw-dot{width:8px;height:8px;border-radius:50%;background:" + t.green + ";" +
-    "box-shadow:0 0 0 3px rgba(78,192,122,.25)}" +
-    ".raw-panel{position:fixed;right:20px;bottom:20px;width:388px;max-width:calc(100vw - 32px);" +
-    "height:600px;max-height:calc(100vh - 40px);background:" + t.panel + ";color:" + t.text + ";" +
+    "@keyframes raw-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}" +
+    ".raw-dot{width:7px;height:7px;border-radius:50%;background:" + t.green + ";animation:raw-ping 2s infinite}" +
+    "@keyframes raw-ping{0%{box-shadow:0 0 0 0 rgba(78,192,122,.6)}100%{box-shadow:0 0 0 6px rgba(78,192,122,0)}}" +
+    ".raw-panel{position:fixed;right:20px;bottom:20px;width:388px;max-width:calc(100vw - 40px);" +
+    "height:600px;max-height:calc(100vh - 100px);background:" + t.panel + ";color:" + t.text + ";" +
     "border:1px solid " + t.line + ";border-radius:16px;display:none;flex-direction:column;overflow:hidden;" +
-    "box-shadow:0 24px 60px rgba(0,0,0,.55);opacity:0;transform:translateY(12px) scale(.98);" +
-    "transition:opacity .18s ease,transform .18s ease}" +
-    ".raw-panel.raw-open{display:flex;opacity:1;transform:none}" +
-    ".raw-head{display:flex;align-items:center;gap:11px;padding:14px 15px;background:" + t.bg + ";" +
-    "border-bottom:1px solid " + t.line + "}" +
+    "box-shadow:0 30px 80px rgba(0,0,0,.65),0 0 0 1px " + GLOW + ".08),0 0 60px " + GLOW + ".10);" +
+    "opacity:0;transform:translateY(12px) scale(.98);transition:opacity .2s ease,transform .2s ease}" +
+    ".raw-panel.raw-open{display:flex;opacity:1;transform:none;animation:raw-in .25s ease}" +
+    ".raw-head{display:flex;align-items:center;gap:12px;padding:14px 16px;" +
+    "background:linear-gradient(180deg,#1b1b20," + t.bg + ");border-bottom:1px solid " + t.line + "}" +
     ".raw-mark{width:30px;height:30px;flex:none}" +
-    ".raw-htext{display:flex;flex-direction:column;line-height:1.15;min-width:0}" +
+    ".raw-htext{display:flex;flex-direction:column;gap:2px;line-height:1.15;min-width:0}" +
     ".raw-title{font-family:Oswald,'Arial Narrow',sans-serif;text-transform:uppercase;" +
-    "letter-spacing:.04em;font-weight:700;font-size:15px}" +
+    "letter-spacing:.08em;font-weight:600;font-size:15px}" +
     ".raw-sub{font-size:11px;color:" + t.muted + ";display:flex;align-items:center;gap:6px}" +
     ".raw-close{margin-left:auto;background:transparent;border:none;color:" + t.muted + ";" +
-    "cursor:pointer;font-size:20px;line-height:1;padding:6px;border-radius:8px}" +
+    "cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;border-radius:6px}" +
     ".raw-close:hover{color:" + t.text + ";background:" + t.panel2 + "}" +
-    ".raw-log{flex:1;overflow-y:auto;padding:16px 15px;display:flex;flex-direction:column;gap:12px;" +
+    ".raw-log{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;display:flex;flex-direction:column;gap:12px;" +
     "scroll-behavior:smooth}" +
-    ".raw-msg{max-width:86%;padding:10px 13px;border-radius:13px;white-space:pre-wrap;word-wrap:break-word}" +
-    ".raw-user{align-self:flex-end;background:linear-gradient(180deg," + t.redHot + "," + t.red + ");color:#fff;" +
-    "border-bottom-right-radius:4px}" +
+    ".raw-msg{max-width:86%;padding:11px 14px;border-radius:13px;font-size:14px;white-space:pre-wrap;word-wrap:break-word}" +
+    ".raw-user{align-self:flex-end;background:linear-gradient(180deg," + t.goldHi + "," + t.gold + ");color:#141417;" +
+    "font-weight:500;border-bottom-right-radius:4px;box-shadow:0 2px 10px " + GLOW + ".3)}" +
     ".raw-bot{align-self:flex-start;background:" + t.panel2 + ";border:1px solid " + t.line + ";" +
     "border-bottom-left-radius:4px}" +
-    ".raw-grounded{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;margin:-4px 0 0 2px;" +
+    ".raw-grounded{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin:-4px 0 0 4px;" +
     "font-size:10.5px;letter-spacing:.02em;color:" + t.green + "}" +
     ".raw-grounded svg{width:12px;height:12px}" +
-    // handoff card: a summary to paste + the Upwork button
+    // handoff card: a summary to paste + the GREEN Upwork CTA
     ".raw-handoff{align-self:stretch;background:" + t.bg + ";border:1px solid " + t.line + ";" +
-    "border-radius:12px;padding:12px 13px;display:flex;flex-direction:column;gap:9px}" +
-    ".raw-handoff-lbl{font-size:11px;letter-spacing:.02em;color:" + t.muted + ";text-transform:uppercase;font-weight:700}" +
-    ".raw-handoff-sum{font-size:13px;line-height:1.5;color:" + t.text + ";white-space:pre-wrap}" +
+    "border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;animation:raw-in .3s ease}" +
+    ".raw-handoff-lbl{font-size:11px;letter-spacing:.14em;color:" + t.muted + ";text-transform:uppercase;font-weight:700}" +
+    ".raw-handoff-sum{font-size:13px;line-height:1.55;color:" + t.text + ";white-space:pre-wrap}" +
     ".raw-handoff-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}" +
-    ".raw-uw{display:inline-flex;align-items:center;gap:8px;text-decoration:none;" +
-    "background:" + t.amber + ";color:" + t.bg + ";font-weight:700;font-size:13.5px;padding:9px 15px;" +
-    "border-radius:10px;border:none;cursor:pointer;font-family:inherit}" +
+    ".raw-uw{display:inline-flex;align-items:center;gap:7px;text-decoration:none;" +
+    "background:linear-gradient(180deg," + t.greenHi + "," + t.green + ");color:#0e0e10;font-weight:700;font-size:13px;" +
+    "padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;" +
+    "box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 2px 8px rgba(78,192,122,.3)}" +
     ".raw-uw:hover{filter:brightness(1.08)}" +
+    ".raw-uw svg{width:13px;height:13px}" +
     ".raw-copy{background:" + t.panel2 + ";color:" + t.text + ";border:1px solid " + t.line + ";" +
-    "font:inherit;font-size:12.5px;padding:8px 12px;border-radius:9px;cursor:pointer}" +
-    ".raw-copy:hover{border-color:" + t.muted + "}" +
+    "font:inherit;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer}" +
+    ".raw-copy:hover{background:#33333b}" +
     ".raw-err{align-self:stretch;font-size:13px;color:#ffb4ab;background:rgba(212,48,47,.12);" +
     "border:1px solid rgba(212,48,47,.35);border-radius:10px;padding:10px 12px}" +
-    ".raw-err a{color:" + t.redHot + ";font-weight:600}" +
-    ".raw-typing{align-self:flex-start;display:inline-flex;gap:4px;padding:12px 14px;background:" + t.panel2 + ";" +
-    "border:1px solid " + t.line + ";border-radius:13px}" +
+    ".raw-err a{color:#ff8a80;font-weight:600}" +
+    ".raw-typing{align-self:flex-start;display:inline-flex;gap:5px;padding:10px 14px;background:" + t.panel2 + ";" +
+    "border:1px solid " + t.line + ";border-radius:999px}" +
     ".raw-typing i{width:6px;height:6px;border-radius:50%;background:" + t.muted + ";animation:raw-b 1s infinite}" +
     ".raw-typing i:nth-child(2){animation-delay:.15s}.raw-typing i:nth-child(3){animation-delay:.3s}" +
-    "@keyframes raw-b{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}" +
-    ".raw-foot{border-top:1px solid " + t.line + ";padding:11px;display:flex;gap:9px;align-items:flex-end;" +
-    "background:" + t.bg + "}" +
-    ".raw-in{flex:1;resize:none;max-height:120px;background:" + t.panel + ";color:" + t.text + ";" +
-    "border:1px solid " + t.line + ";border-radius:11px;padding:10px 12px;font:inherit;outline:none}" +
-    ".raw-in:focus{border-color:" + t.red + "}" +
-    ".raw-send{flex:none;width:42px;height:42px;border:none;border-radius:11px;cursor:pointer;color:#fff;" +
-    "background:linear-gradient(180deg," + t.redHot + "," + t.red + ");display:flex;align-items:center;justify-content:center}" +
-    ".raw-send:disabled{opacity:.45;cursor:default}" +
-    ".raw-send svg{width:19px;height:19px}" +
-    ".raw-tag{padding:6px 15px 12px;font-size:10.5px;color:" + t.muted + ";text-align:center;background:" + t.bg + "}" +
-    ".raw-tag b{color:" + t.muted + ";font-weight:700}" +
+    "@keyframes raw-b{0%,80%,100%{opacity:.45;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}" +
+    ".raw-foot{border-top:1px solid " + t.line + ";padding:12px 14px;display:flex;gap:10px;align-items:flex-end;" +
+    "background:linear-gradient(180deg," + t.bg + ",#101013)}" +
+    ".raw-in{flex:1;resize:none;max-height:120px;min-height:42px;background:" + t.panel + ";color:" + t.text + ";" +
+    "border:1px solid " + t.line + ";border-radius:10px;padding:11px 13px;font:inherit;font-size:14px;outline:none}" +
+    ".raw-in:focus{border-color:" + t.gold + ";box-shadow:0 0 0 3px " + GLOW + ".18)}" +
+    ".raw-send{flex:none;width:42px;height:42px;border:none;border-radius:10px;cursor:pointer;" +
+    "background:linear-gradient(180deg," + t.goldHi + "," + t.gold + ");display:flex;align-items:center;justify-content:center;" +
+    "box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 2px 8px " + GLOW + ".35)}" +
+    ".raw-send:hover{filter:brightness(1.1)}" +
+    ".raw-send:disabled{opacity:.45;cursor:default;filter:none}" +
+    ".raw-send svg{width:17px;height:17px}" +
+    ".raw-tag{padding:7px 12px 10px;font-size:10.5px;color:" + t.muted + ";text-align:center;background:#101013}" +
+    ".raw-tag b{color:" + t.text + ";font-weight:700}" +
     "@media (max-width:480px){.raw-panel{right:8px;bottom:8px;width:calc(100vw - 16px);height:calc(100vh - 16px)}" +
     ".raw{right:12px;bottom:12px}}" +
     "@media (prefers-reduced-motion:reduce){.raw *{transition:none!important;animation:none!important}}";
@@ -172,21 +181,20 @@
 
   // --- SVG bits -------------------------------------------------------------
   var MARK =
-    '<svg class="raw-mark" viewBox="0 0 40 40" aria-hidden="true">' +
-    '<rect x="2" y="2" width="36" height="36" rx="8" fill="none" stroke="' + t.red + '" stroke-width="3"/>' +
-    '<circle cx="23" cy="17" r="5" fill="' + t.redHot + '"/></svg>';
+    '<svg class="raw-mark" viewBox="0 0 30 30" aria-hidden="true">' +
+    '<rect x="3" y="3" width="24" height="24" rx="6" fill="none" stroke="' + t.gold + '" stroke-width="2.5"/>' +
+    '<circle cx="15" cy="15" r="4.5" fill="' + t.goldHi + '"/></svg>';
   var CHAT_ICON =
-    '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.5A8 8 0 1 1 21 12Z" ' +
-    'stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>';
+    '<svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h11A1.5 1.5 0 0 1 ' +
+    '16 3.5v8a1.5 1.5 0 0 1-1.5 1.5H7l-4 3.5V13h.5A1.5 1.5 0 0 1 2 11.5Z" fill="#141417"/></svg>';
   var SEND_ICON =
-    '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l16-8-6 16-3-6-7-2Z" ' +
-    'stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+    '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 8 14 2 9.5 14 7.5 9 1.5 8Z" fill="#141417"/></svg>';
   var CHECK_ICON =
-    '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l5 5L20 6" stroke="' + t.green +
-    '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    '<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6.5 5 9.5 10 3" stroke="' + t.green +
+    '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var UW_ICON =
-    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">' +
-    '<path d="M5 13l4 4L19 7" stroke="' + t.bg + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    '<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6.5 5 9.5 10 3" stroke="#0e0e10" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // --- Build DOM ------------------------------------------------------------
   var root = document.createElement("div");
@@ -202,13 +210,13 @@
     '<section class="raw-panel" role="dialog" aria-label="Assistant" aria-modal="false">' +
     '<header class="raw-head">' + MARK +
     '<div class="raw-htext"><span class="raw-title">' + esc(TITLE) + "</span>" +
-    '<span class="raw-sub"><span class="raw-dot"></span>Grounded answers · no guessing</span></div>' +
+    '<span class="raw-sub"><span class="raw-dot"></span>Grounded answers only</span></div>' +
     '<button class="raw-close" aria-label="Close">×</button></header>' +
     '<div class="raw-log" role="log" aria-live="polite"></div>' +
-    '<div class="raw-foot"><textarea class="raw-in" rows="1" placeholder="Ask about the work, or describe your project…" ' +
+    '<div class="raw-foot"><textarea class="raw-in" rows="1" placeholder="" ' +
     'aria-label="Message"></textarea>' +
     '<button class="raw-send" aria-label="Send" disabled>' + SEND_ICON + "</button></div>" +
-    '<div class="raw-tag">Answers from <b>what ' + esc(NAME) + ' actually does</b>. Nothing invented.</div>' +
+    '<div class="raw-tag">Nothing invented. <b>Grounded or it doesn\'t answer.</b></div>' +
     "</section>";
   document.body.appendChild(root);
 
