@@ -35,7 +35,7 @@ def main() -> int:
         ("What kind of work do you do?",
          ["desktop", "automation", "script", "ai", "app"]),
         ("What's your hourly rate?",
-         ["35"]),
+         ["negotiab", "scope", "depend", "individually"]),
         ("Do you have any client reviews I can look at?",
          ["newer", "not", "no ", "yet", "posted"]),
     ]
